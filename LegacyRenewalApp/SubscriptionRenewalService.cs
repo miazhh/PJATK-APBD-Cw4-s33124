@@ -89,68 +89,13 @@ namespace LegacyRenewalApp
                 notes += "minimum discounted subtotal applied; ";
             }
 
-            decimal supportFee = 0m;
-            if (includePremiumSupport)
-            {
-                if (normalizedPlanCode == "START")
-                {
-                    supportFee = 250m;
-                }
-                else if (normalizedPlanCode == "PRO")
-                {
-                    supportFee = 400m;
-                }
-                else if (normalizedPlanCode == "ENTERPRISE")
-                {
-                    supportFee = 700m;
-                }
+            decimal supportFee = CalculateSupportFee(includePremiumSupport, normalizedPlanCode);
+            if (includePremiumSupport) notes += "premium support included; ";
 
-                notes += "premium support included; ";
-            }
+            decimal paymentFee = CalculatePaymentFee(normalizedPaymentMethod, subtotalAfterDiscount + supportFee);
+            notes += GetPaymentNote(normalizedPaymentMethod);
 
-            decimal paymentFee = 0m;
-            if (normalizedPaymentMethod == "CARD")
-            {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.02m;
-                notes += "card payment fee; ";
-            }
-            else if (normalizedPaymentMethod == "BANK_TRANSFER")
-            {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.01m;
-                notes += "bank transfer fee; ";
-            }
-            else if (normalizedPaymentMethod == "PAYPAL")
-            {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.035m;
-                notes += "paypal fee; ";
-            }
-            else if (normalizedPaymentMethod == "INVOICE")
-            {
-                paymentFee = 0m;
-                notes += "invoice payment; ";
-            }
-            else
-            {
-                throw new ArgumentException("Unsupported payment method");
-            }
-
-            decimal taxRate = 0.20m;
-            if (customer.Country == "Poland")
-            {
-                taxRate = 0.23m;
-            }
-            else if (customer.Country == "Germany")
-            {
-                taxRate = 0.19m;
-            }
-            else if (customer.Country == "Czech Republic")
-            {
-                taxRate = 0.21m;
-            }
-            else if (customer.Country == "Norway")
-            {
-                taxRate = 0.25m;
-            }
+            decimal taxRate = GetTaxRate(customer.Country);
 
             decimal taxBase = subtotalAfterDiscount + supportFee + paymentFee;
             decimal taxAmount = taxBase * taxRate;
@@ -192,6 +137,55 @@ namespace LegacyRenewalApp
             }
 
             return invoice;
+        }
+
+        private decimal CalculateSupportFee(bool includePremiumSupport, string planCode)
+        {
+            if (!includePremiumSupport) return 0m;
+
+            return planCode switch
+            {
+                "START" => 250m,
+                "PRO" => 400m,
+                "ENTERPRISE" => 700m,
+                _ => 0m
+            };
+        }
+
+        private decimal CalculatePaymentFee(string paymentMethod, decimal subtotal)
+        {
+            return paymentMethod switch
+            {
+                "CARD" => subtotal * 0.02m,
+                "BANK_TRANSFER" => subtotal * 0.01m,
+                "PAYPAL" => subtotal * 0.035m,
+                "INVOICE" => 0m,
+                _ => throw new ArgumentException("Unsupported payment method")
+            };
+        }
+
+        private string GetPaymentNote(string paymentMethod)
+        {
+            return paymentMethod switch
+            {
+                "CARD" => "card payment fee; ",
+                "BANK_TRANSFER" => "bank transfer fee; ",
+                "PAYPAL" => "paypal fee; ",
+                "INVOICE" => "invoice payment; ",
+                _ => string.Empty
+            };
+        }
+
+        private decimal GetTaxRate(string country)
+        {
+            return country switch
+            {
+                "Poland" => 0.23m,
+                "Germany" => 0.19m,
+                "Czech Republic" => 0.21m,
+                "Norway" => 0.25m,
+                _ => 0.2m
+            };
         }
     }
 }
