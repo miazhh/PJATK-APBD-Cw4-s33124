@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace LegacyRenewalApp
 {
-    public class CustomerRepository
+    public class CustomerRepository : ICustomerRepository
     {
         public static readonly Dictionary<int, Customer> Database = new Dictionary<int, Customer>
         {
@@ -14,7 +14,7 @@ namespace LegacyRenewalApp
             { 4, new Customer { Id = 4, FullName = "School Lab", Email = "it-admin@school.example.com", Segment = "Education", Country = "Czech Republic", YearsWithCompany = 3, LoyaltyPoints = 90, IsActive = true } },
             { 5, new Customer { Id = 5, FullName = "Nordic Ventures", Email = "finance@nordic.example.com", Segment = "Silver", Country = "Norway", YearsWithCompany = 2, LoyaltyPoints = 30, IsActive = true } }
         };
-
+        
         public Customer GetById(int customerId)
         {
             int randomWaitTime = new Random().Next(500);
